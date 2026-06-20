@@ -9,9 +9,15 @@ struct ResponseValue{
 
 #[derive(Deserialize,Debug)]
 struct Response{
-    result: ResponseValue
+    result: Option<ResponseValue>,
+    error: Option<RpcError>,
 }
 
+#[derive(Debug, Deserialize)]
+struct RpcError {
+    code: i32,
+    message: String,
+}
 
 #[tokio::main]
 async fn main() {
@@ -40,6 +46,19 @@ async fn main() {
 
 
     let data : Response= res.json().await.unwrap();
-    println!("{} SOL",data.result.value as f64/1_000_000_000.0);
+
+    match data.result{
+        Some(balance_data) =>{
+            println!("{} SOL",balance_data.value as f64/1_000_000_000.0);
+        },
+        None => {
+            if let Some(error) = data.error{
+                println!("RPC Error {}:{}", error.code,error.message);
+            }else{
+                println!("RPC returned unexpected response");
+            }
+        }
+
+    }
     
 }
